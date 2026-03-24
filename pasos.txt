@@ -1,0 +1,15 @@
+pip install "fastapi[standard]"
+
+fastapi dev app.main
+
+# Ejecutar en Modo Producción:
+fastapi run app.main
+uvicorn app.main:app --host --port 8000
+
+# Alternativa con Uvicorn
+uvicorn app.main:app --reload
+
+
+main: el archivo main.py.
+app: el objeto app = FastAPI().
+--reload: activa la recarga automática

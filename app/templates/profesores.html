@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Académico — Profesores</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <span>🎓</span>
+        <span class="brand-text">SisAcadémico</span>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="/ui" class="nav-item">
+            <span class="icon">👨‍🎓</span>
+            <span class="label">Estudiantes</span>
+        </a>
+        <a href="/ui/profesores" class="nav-item active">
+            <span class="icon">👨‍🏫</span>
+            <span class="label">Profesores</span>
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <a href="/docs" target="_blank">
+            <span class="icon">📄</span>
+            <span class="label">API Docs</span>
+        </a>
+    </div>
+</aside>
+
+<!-- Contenido principal -->
+<div class="main-wrapper">
+
+    <!-- Topbar -->
+    <header class="topbar">
+        <span class="topbar-title">Profesores</span>
+        <span class="topbar-subtitle">{{ profesores|length }} registros</span>
+    </header>
+
+    <!-- Página -->
+    <main class="page-content">
+
+        <!-- Alertas -->
+        {% if mensaje %}
+        <div class="alert alert-success">✅ {{ mensaje }}</div>
+        {% endif %}
+        {% if error %}
+        <div class="alert alert-danger">❌ {{ error }}</div>
+        {% endif %}
+
+        <!-- Tabla -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Lista de profesores</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Departamento</th>
+                                <th>Especialidad</th>
+                                <th>Teléfono</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in profesores %}
+                            <tr>
+                                <td>{{ p.id }}</td>
+                                <td>{{ p.nombre }}</td>
+                                <td>{{ p.email }}</td>
+                                <td>{{ p.departamento | capitalize }}</td>
+                                <td>{{ p.especialidad | capitalize }}</td>
+                                <td>{{ p.telefono if p.telefono else '—' }}</td>
+                                <td>
+                                    <span class="badge {{ 'activo' if p.activo else 'inactivo' }}">
+                                        {{ 'Activo' if p.activo else 'Inactivo' }}
+                                    </span>
+                                </td>
+                                <td class="acciones">
+                                    <form method="POST" action="/ui/profesores/{{ p.id }}/estado" style="display:inline">
+                                        <input type="hidden" name="activo" value="{{ 'false' if p.activo else 'true' }}">
+                                        <button type="submit" class="btn {{ 'btn-warning' if p.activo else 'btn-success' }}">
+                                            {{ 'Desactivar' if p.activo else 'Activar' }}
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="/ui/profesores/{{ p.id }}/eliminar" style="display:inline"
+                                          onsubmit="return confirm('¿Eliminar a {{ p.nombre }}?')">
+                                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario -->
+        <details class="formulario" {% if not profesores %}open{% endif %}>
+            <summary>
+                <h2>➕ Registrar nuevo profesor</h2>
+                <span class="icono">▼</span>
+            </summary>
+            <form method="POST" action="/ui/profesores/nuevo">
+                <div class="form-group">
+                    <label for="nombre">Nombre completo *</label>
+                    <input type="text" id="nombre" name="nombre" placeholder="Ej. Laura Vega" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" placeholder="l.vega@universidad.edu" required>
+                </div>
+                <div class="form-group">
+                    <label for="departamento">Departamento *</label>
+                    <select id="departamento" name="departamento" required>
+                        <option value="" disabled selected>-- Selecciona --</option>
+                        <option value="ingenieria">Ingeniería</option>
+                        <option value="medicina">Medicina</option>
+                        <option value="derecho">Derecho</option>
+                        <option value="administracion">Administración</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="especialidad">Especialidad *</label>
+                    <input type="text" id="especialidad" name="especialidad"
+                           placeholder="Ej. Estructuras de datos" required>
+                </div>
+                <div class="form-group">
+                    <label for="telefono">Teléfono (opcional)</label>
+                    <input type="tel" id="telefono" name="telefono" maxlength="10"
+                           pattern="\d{10}" placeholder="4421110001">
+                </div>
+                <button type="submit">Registrar profesor</button>
+            </form>
+        </details>
+
+    </main>
+</div>
+
+</body>
+</html>

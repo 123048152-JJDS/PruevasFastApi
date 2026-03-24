@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Académico API</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1e1b4b 0%, #4f46e5 100%);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+        }
+
+        .welcome-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 48px 56px;
+            max-width: 520px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,.25);
+        }
+
+        .welcome-icon { font-size: 3.5em; margin-bottom: 12px; }
+
+        .welcome-card h1 {
+            font-size: 1.7em;
+            color: #1e1b4b;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .welcome-card p {
+            color: #6b7280;
+            font-size: 0.95em;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .badge-version {
+            display: inline-block;
+            background: #eef2ff;
+            color: #4f46e5;
+            font-size: 0.78em;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 99px;
+            margin-bottom: 24px;
+        }
+
+        .links-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .link-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 16px 12px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #374151;
+            font-weight: 600;
+            font-size: 0.88em;
+            transition: border-color .2s, background .2s, transform .15s;
+        }
+
+        .link-card:hover {
+            border-color: #4f46e5;
+            background: #eef2ff;
+            color: #4f46e5;
+            transform: translateY(-2px);
+        }
+
+        .link-card .link-icon { font-size: 1.6em; }
+        .link-card .link-desc { font-size: 0.78em; color: #9ca3af; font-weight: 400; }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.82em;
+            color: #6b7280;
+            padding-top: 20px;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .dot {
+            width: 8px; height: 8px;
+            background: #16a34a;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .4; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="welcome-card">
+    <div class="welcome-icon">🎓</div>
+    <span class="badge-version">v1.0.0</span>
+    <h1>Sistema Académico API</h1>
+    <p>Gestión de estudiantes y profesores.<br>Selecciona una sección para comenzar.</p>
+
+    <div class="links-grid">
+        <a href="/ui" class="link-card">
+            <span class="link-icon">👨‍🎓</span>
+            <span>Estudiantes</span>
+            <span class="link-desc">Vista y registro</span>
+        </a>
+        <a href="/ui/profesores" class="link-card">
+            <span class="link-icon">👨‍🏫</span>
+            <span>Profesores</span>
+            <span class="link-desc">Vista y registro</span>
+        </a>
+        <a href="/docs" class="link-card">
+            <span class="link-icon">📄</span>
+            <span>Swagger UI</span>
+            <span class="link-desc">Documentación API</span>
+        </a>
+        <a href="/redoc" class="link-card">
+            <span class="link-icon">📘</span>
+            <span>ReDoc</span>
+            <span class="link-desc">Referencia API</span>
+        </a>
+    </div>
+
+    <div class="status-bar">
+        <span class="dot"></span>
+        Servidor en línea — <strong style="color:#111827">FastAPI</strong> &nbsp;·&nbsp; Python
+    </div>
+</div>
+
+</body>
+</html>

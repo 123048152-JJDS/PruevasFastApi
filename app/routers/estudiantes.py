@@ -1,51 +1,166 @@
-from fastapi import APIRouter, Query
-router = APIRouter(
-    prefix="/estudiantes",
-    tags=["Estudiantes"]
+from fastapi import APIRouter, Query, status, Body
+from typing import Optional
+from app.schemas.estudiante import EstudianteCreate, EstudianteResponse, EstudianteUpdate
+import app.services.estudiante_service as svc
+
+router = APIRouter(prefix="/estudiantes", tags=["Estudiantes"])
+
+
+# ─────────────────────────────────────────
+# GET /estudiantes/stats/resumen
+# Va ANTES de /{estudiante_id} para evitar
+# que FastAPI interprete "stats" como un int
+# ─────────────────────────────────────────
+@router.get(
+    "/stats/resumen",
+    summary="Estadísticas generales",
+    response_model=dict,
 )
+def obtener_estadisticas():
+    """
+    Retorna estadísticas generales del sistema:
+    - Total de estudiantes registrados
+    - Cantidad de activos e inactivos
+    - Promedio general de calificaciones
+    - Distribución por carrera
+    """
+    return svc.estadisticas()
 
-estudiantes_db = [
-    {"id": 1, "nombre": "Juan Pérez", "matricula": "2021001", "carrera": "ingenieria"},
-    {"id": 2, "nombre": "María López", "matricula": "2021002", "carrera": "medicina"},
-    {"id": 3, "nombre": "Carlos García", "matricula": "2021003", "carrera": "derecho"},
-    {"id": 4, "nombre": "Ana Martínez", "matricula": "2021004", "carrera": "ingenieria"},
-    {"id": 5, "nombre": "Pedro Sánchez", "matricula": "2024305", "carrera": "medicina"},
-    {"id": 6, "nombre": "Carlos Marques", "matricula": "2065003", "carrera": "derecho"},
-    {"id": 7, "nombre": "Luisa Martínez", "matricula": "2021544", "carrera": "ingenieria"},
-    {"id": 8, "nombre": "Petronilo Sánchez", "matricula": "2025405", "carrera": "medicina"}
-]
 
-@router.get("/")
+# ─────────────────────────────────────────
+# GET /estudiantes/
+# ─────────────────────────────────────────
+@router.get(
+    "/",
+    response_model=list[EstudianteResponse],
+    summary="Listar estudiantes",
+)
 def listar_estudiantes(
-    skip: int = Query(0, ge=0, description="Número de registros a saltar"),
-    limit: int = Query(10, ge=1, le=100, description="Cantidad de registros a retornar"),
-    carrera: str = Query(None, description="Filtrar por carrera")
+    skip: int = Query(0, ge=0, description="Registros a saltar (paginación)"),
+    limit: int = Query(10, ge=1, le=100, description="Cantidad máxima a retornar"),
+    carrera: Optional[str] = Query(None, description="Filtrar por carrera"),
+    buscar: Optional[str] = Query(None, description="Buscar por nombre"),
+    activo: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
 ):
     """
-    Lista todos los estudiantes con paginación.
-   
-    - **skip**: Cuántos estudiantes saltar (para paginación)
-    - **limit**: Cuántos estudiantes retornar (máximo 100)
-    - **Carrera**: Filtro de estudiantes por carrera
+    Lista estudiantes con paginación y filtros opcionales.
+    Combina cualquier filtro: carrera, nombre y estado activo.
     """
-    estudiantes = estudiantes_db
+    return svc.obtener_todos(carrera, buscar, activo, skip, limit)
 
-    if carrera:
-        estudiantes = [e for e in estudiantes if e["carrera"]== carrera]
-    return {
-        "total": len(estudiantes_db),
-        "skip": skip,
-        "limit": limit,
-        "Filtros":{"carrera": carrera} if carrera else None,
-        "estudiantes": estudiantes_db[skip : skip + limit]
-    }
 
-@router.get("/{estudiante_id}")
+# ─────────────────────────────────────────
+# GET /estudiantes/{estudiante_id}
+# ─────────────────────────────────────────
+@router.get(
+    "/{estudiante_id}",
+    response_model=EstudianteResponse,
+    summary="Obtener estudiante por ID",
+)
 def obtener_estudiante(estudiante_id: int):
     """
-    Obtiene un estudiante por su ID.
+    Retorna un estudiante específico por su ID.
+    Lanza 404 si no existe.
     """
-    for estudiante in estudiantes_db:
-        if estudiante["id"] == estudiante_id:
-            return estudiante
-    return {"error": "Estudiante no encontrado"}
+    return svc.obtener_por_id(estudiante_id)
+
+
+# ─────────────────────────────────────────
+# POST /estudiantes/
+# ─────────────────────────────────────────
+@router.post(
+    "/",
+    response_model=EstudianteResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Crear estudiante",
+)
+def crear_estudiante(estudiante: EstudianteCreate):
+    """
+    Crea un nuevo estudiante aplicando validaciones de schema y de negocio.
+
+    Validaciones de schema (automáticas):
+    - Nombre con al menos 2 palabras y sin números
+    - Matrícula de exactamente 7 dígitos
+    - Email con formato válido
+    - Semestre entre 1 y 12
+    - Promedio entre 0.0 y 10.0
+    - Teléfono de 10 dígitos (opcional)
+
+    Validaciones de negocio:
+    - Email no duplicado (409)
+    - Matrícula no duplicada (409)
+    """
+    return svc.crear(estudiante)
+
+
+# ─────────────────────────────────────────
+# PUT /estudiantes/{estudiante_id}
+# ─────────────────────────────────────────
+@router.put(
+    "/{estudiante_id}",
+    response_model=EstudianteResponse,
+    summary="Actualizar estudiante completo",
+)
+def actualizar_estudiante(estudiante_id: int, estudiante: EstudianteCreate):
+    """
+    Reemplaza TODOS los campos del estudiante.
+    Debes enviar todos los datos aunque no cambien.
+    Lanza 404 si el estudiante no existe.
+    """
+    return svc.actualizar(estudiante_id, estudiante)
+
+
+# ─────────────────────────────────────────
+# PATCH /estudiantes/{estudiante_id}
+# ─────────────────────────────────────────
+@router.patch(
+    "/{estudiante_id}",
+    response_model=EstudianteResponse,
+    summary="Actualizar campos específicos",
+)
+def actualizar_parcial(estudiante_id: int, estudiante: EstudianteUpdate):
+    """
+    Actualiza SOLO los campos que envíes en el body.
+    Los campos omitidos se conservan con su valor actual.
+    Lanza 404 si el estudiante no existe.
+    """
+    return svc.actualizar_parcial(estudiante_id, estudiante)
+
+
+# ─────────────────────────────────────────
+# PUT /estudiantes/{estudiante_id}/estado
+# Separado de PATCH general para evitar
+# ambigüedad de rutas y ser más explícito
+# ─────────────────────────────────────────
+@router.put(
+    "/{estudiante_id}/estado",
+    response_model=EstudianteResponse,
+    summary="Activar o desactivar estudiante",
+)
+def cambiar_estado(
+    estudiante_id: int,
+    activo: bool = Body(..., embed=True, description="true para activar, false para desactivar"),
+):
+    """
+    Cambia el estado activo/inactivo del estudiante.
+    Recibe el valor en el body: { "activo": true } o { "activo": false }.
+    Lanza 404 si el estudiante no existe.
+    """
+    return svc.cambiar_estado(estudiante_id, activo)
+
+
+# ─────────────────────────────────────────
+# DELETE /estudiantes/{estudiante_id}
+# ─────────────────────────────────────────
+@router.delete(
+    "/{estudiante_id}",
+    summary="Eliminar estudiante",
+    response_model=dict,
+)
+def eliminar_estudiante(estudiante_id: int):
+    """
+    Elimina permanentemente un estudiante por su ID.
+    Retorna un mensaje de confirmación.
+    Lanza 404 si el estudiante no existe.
+    """
+    return svc.eliminar(estudiante_id)
