@@ -42,6 +42,7 @@ siguiente_id = 6
 
 # ── Helpers internos ──────────────────────
 def _buscar_por_id(estudiante_id: int) -> dict:
+    """Retorna el estudiante o lanza 404."""
     for e in estudiantes_db:
         if e["id"] == estudiante_id:
             return e
@@ -52,6 +53,7 @@ def _buscar_por_id(estudiante_id: int) -> dict:
 
 
 def _validar_duplicados(email: str, matricula: str, excluir_id: int = None):
+    """Lanza 409 si el email o matrícula ya existen (ignorando excluir_id)."""
     for e in estudiantes_db:
         if excluir_id and e["id"] == excluir_id:
             continue
@@ -98,6 +100,7 @@ def crear(datos: EstudianteCreate) -> dict:
 
 
 def actualizar(estudiante_id: int, datos: EstudianteCreate) -> dict:
+    """PUT — reemplaza todos los campos."""
     estudiante = _buscar_por_id(estudiante_id)
     _validar_duplicados(datos.email, datos.matricula, excluir_id=estudiante_id)
     estudiante.update({**datos.model_dump()})
@@ -105,6 +108,7 @@ def actualizar(estudiante_id: int, datos: EstudianteCreate) -> dict:
 
 
 def actualizar_parcial(estudiante_id: int, datos: EstudianteUpdate) -> dict:
+    """PATCH — actualiza solo los campos enviados."""
     estudiante = _buscar_por_id(estudiante_id)
     cambios = datos.model_dump(exclude_unset=True)
     if "email" in cambios or "matricula" in cambios:
@@ -118,12 +122,14 @@ def actualizar_parcial(estudiante_id: int, datos: EstudianteUpdate) -> dict:
 
 
 def cambiar_estado(estudiante_id: int, activo: bool) -> dict:
+    """PATCH — activa o desactiva un estudiante."""
     estudiante = _buscar_por_id(estudiante_id)
     estudiante["activo"] = activo
     return estudiante
 
 
 def eliminar(estudiante_id: int) -> dict:
+    """DELETE — elimina el registro permanentemente."""
     estudiante = _buscar_por_id(estudiante_id)
     estudiantes_db.remove(estudiante)
     return {"mensaje": f"Estudiante '{estudiante['nombre']}' eliminado correctamente"}
