@@ -13,3 +13,5 @@ uvicorn app.main:app --reload
 main: el archivo main.py.
 app: el objeto app = FastAPI().
 --reload: activa la recarga automática
+
+python.exe -m pip install --upgrade pip
