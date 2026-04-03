@@ -1,6 +1,12 @@
-from fastapi import APIRouter, Query, status, Body
+from fastapi import APIRouter, Query, status, Body, Depends
+from sqlalchemy.orm import Session
 from typing import Optional
-from app.schemas.estudiante import EstudianteCreate, EstudianteResponse, EstudianteUpdate
+from app.schemas.estudiante import (
+    EstudianteCreate,
+    EstudianteResponse,
+    EstudianteUpdate,
+)
+from app.database import get_db  # NUEVO: importar get_db
 import app.services.estudiante_service as svc
 
 router = APIRouter(prefix="/estudiantes", tags=["Estudiantes"])
@@ -16,7 +22,8 @@ router = APIRouter(prefix="/estudiantes", tags=["Estudiantes"])
     summary="Estadísticas generales",
     response_model=dict,
 )
-def obtener_estadisticas():
+# def obtener_estadisticas():
+def obtener_estadisticas(db: Session = Depends(get_db)):
     """
     Retorna estadísticas generales del sistema:
     - Total de estudiantes registrados
@@ -24,7 +31,8 @@ def obtener_estadisticas():
     - Promedio general de calificaciones
     - Distribución por carrera
     """
-    return svc.estadisticas()
+    # return svc.estadisticas()
+    return svc.estadisticas(db)  # NUEVO: pasar db a la capa de servicio
 
 
 # ─────────────────────────────────────────
@@ -41,12 +49,14 @@ def listar_estudiantes(
     carrera: Optional[str] = Query(None, description="Filtrar por carrera"),
     buscar: Optional[str] = Query(None, description="Buscar por nombre"),
     activo: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
+    db: Session = Depends(get_db),  # NUEVO: inyectar sesión de BD
 ):
     """
     Lista estudiantes con paginación y filtros opcionales.
     Combina cualquier filtro: carrera, nombre y estado activo.
     """
-    return svc.obtener_todos(carrera, buscar, activo, skip, limit)
+    # return svc.obtener_todos(carrera, buscar, activo, skip, limit)
+    return svc.obtener_todos(db, carrera, buscar, activo, skip, limit)  # NUEVO: pasar db a la capa de servicio
 
 
 # ─────────────────────────────────────────
@@ -57,12 +67,14 @@ def listar_estudiantes(
     response_model=EstudianteResponse,
     summary="Obtener estudiante por ID",
 )
-def obtener_estudiante(estudiante_id: int):
+# def obtener_estudiante(estudiante_id: int):
+def obtener_estudiante(estudiante_id: int, db: Session = Depends(get_db)):
     """
     Retorna un estudiante específico por su ID.
     Lanza 404 si no existe.
     """
-    return svc.obtener_por_id(estudiante_id)
+    # return svc.obtener_por_id(estudiante_id)
+    return svc.obtener_por_id(db, estudiante_id)
 
 
 # ─────────────────────────────────────────
@@ -74,7 +86,8 @@ def obtener_estudiante(estudiante_id: int):
     status_code=status.HTTP_201_CREATED,
     summary="Crear estudiante",
 )
-def crear_estudiante(estudiante: EstudianteCreate):
+# def crear_estudiante(estudiante: EstudianteCreate):
+def crear_estudiante(estudiante: EstudianteCreate, db: Session = Depends(get_db)):
     """
     Crea un nuevo estudiante aplicando validaciones de schema y de negocio.
 
@@ -90,7 +103,8 @@ def crear_estudiante(estudiante: EstudianteCreate):
     - Email no duplicado (409)
     - Matrícula no duplicada (409)
     """
-    return svc.crear(estudiante)
+    # return svc.crear(estudiante)
+    return svc.crear(db, estudiante)  # NUEVO: pasar db a la capa de servicio
 
 
 # ─────────────────────────────────────────
@@ -101,13 +115,15 @@ def crear_estudiante(estudiante: EstudianteCreate):
     response_model=EstudianteResponse,
     summary="Actualizar estudiante completo",
 )
-def actualizar_estudiante(estudiante_id: int, estudiante: EstudianteCreate):
+# def actualizar_estudiante(estudiante_id: int, estudiante: EstudianteCreate):
+def actualizar_estudiante(estudiante_id: int, estudiante: EstudianteCreate, db: Session = Depends(get_db)):
     """
     Reemplaza TODOS los campos del estudiante.
     Debes enviar todos los datos aunque no cambien.
     Lanza 404 si el estudiante no existe.
     """
-    return svc.actualizar(estudiante_id, estudiante)
+    # return svc.actualizar(estudiante_id, estudiante)
+    return svc.actualizar(db, estudiante_id, estudiante)  # NUEVO: pasar db a la capa de servicio
 
 
 # ─────────────────────────────────────────
@@ -118,14 +134,15 @@ def actualizar_estudiante(estudiante_id: int, estudiante: EstudianteCreate):
     response_model=EstudianteResponse,
     summary="Actualizar campos específicos",
 )
-def actualizar_parcial(estudiante_id: int, estudiante: EstudianteUpdate):
+# def actualizar_parcial(estudiante_id: int, estudiante: EstudianteUpdate):
+def actualizar_parcial(estudiante_id: int, estudiante: EstudianteUpdate, db: Session = Depends(get_db)):
     """
     Actualiza SOLO los campos que envíes en el body.
     Los campos omitidos se conservan con su valor actual.
     Lanza 404 si el estudiante no existe.
     """
-    return svc.actualizar_parcial(estudiante_id, estudiante)
-
+    # return svc.actualizar_parcial(estudiante_id, estudiante)
+    return svc.actualizar_parcial(db, estudiante_id, estudiante)  # NUEVO: pasar db a la capa de servicio
 
 # ─────────────────────────────────────────
 # PUT /estudiantes/{estudiante_id}/estado
@@ -140,14 +157,15 @@ def actualizar_parcial(estudiante_id: int, estudiante: EstudianteUpdate):
 def cambiar_estado(
     estudiante_id: int,
     activo: bool = Body(..., embed=True, description="true para activar, false para desactivar"),
+    db: Session = Depends(get_db),                      # NUEVO
 ):
     """
     Cambia el estado activo/inactivo del estudiante.
     Recibe el valor en el body: { "activo": true } o { "activo": false }.
     Lanza 404 si el estudiante no existe.
     """
-    return svc.cambiar_estado(estudiante_id, activo)
-
+    # return svc.cambiar_estado(estudiante_id, activo)
+    return svc.cambiar_estado(db, estudiante_id, activo)  # ANTES: sin db
 
 # ─────────────────────────────────────────
 # DELETE /estudiantes/{estudiante_id}
@@ -157,10 +175,12 @@ def cambiar_estado(
     summary="Eliminar estudiante",
     response_model=dict,
 )
-def eliminar_estudiante(estudiante_id: int):
+# def eliminar_estudiante(estudiante_id: int):
+def eliminar_estudiante(estudiante_id: int, db: Session = Depends(get_db)):
     """
     Elimina permanentemente un estudiante por su ID.
     Retorna un mensaje de confirmación.
     Lanza 404 si el estudiante no existe.
     """
-    return svc.eliminar(estudiante_id)
+    # return svc.eliminar(estudiante_id)
+    return svc.eliminar(db, estudiante_id)  # ANTES: sin db

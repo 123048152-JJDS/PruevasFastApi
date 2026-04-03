@@ -15,3 +15,16 @@ app: el objeto app = FastAPI().
 --reload: activa la recarga automática
 
 python.exe -m pip install --upgrade pip
+
+# Crear un entorno virtual
+python -m venv env
+source env/bin/activate  # En Windows: env\Scripts\activate
+
+# Instalar dependencias
+pip install -r requirements.txt
+pip install --upgrade pip
+pip freeze > requirements.txt
+
+# Generar requirements.txt automáticamente
+pip install pipreqs
+pipreqs .
